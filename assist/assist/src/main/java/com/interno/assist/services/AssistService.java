@@ -6,6 +6,7 @@ import com.interno.assist.dto.AssistRequestDto;
 import com.interno.assist.dto.ModelContentDto;
 import com.interno.assist.dto.ModelContentPartDto;
 import com.interno.assist.dto.ModelRequestDto;
+import com.interno.assist.enums.PromptEnum;
 import com.interno.assist.exceptionHandling.ApplicationRuntimeException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,8 @@ public class AssistService {
     private final WebClientBuilder webClient;
 
     private final ObjectMapper objectMapper;
+
+    private final String TRANSLATE = "translate";
 
     public AssistService(
             WebClientBuilder webClient,
@@ -76,186 +79,29 @@ public class AssistService {
                 .trim()
                 .toLowerCase();
 
+        PromptEnum promptEnum = PromptEnum.valueOf(operation.toUpperCase());
+
         String content = requestDto.getContent();
 
         StringBuilder promptBuilder =
                 new StringBuilder();
 
-        switch (operation) {
+        if(TRANSLATE.equals(promptEnum.getCode())) {
+            String language = requestDto.getLanguage();
 
-            case "summarize":
-
-                promptBuilder.append("""
-                        Summarize the following content.
-
-                        Requirements:
-                        - Keep the important information.
-                        - Remove unnecessary repetition.
-                        - Use clear and simple language.
-                        - Use a short heading if appropriate.
-                        - Use bullet points when they improve readability.
-                        - Do not add information that is not present in the original content.
-
-                        Content:
-                        
-                        """);
-
-                break;
-
-            case "suggest":
-
-                promptBuilder.append("""
-                        Analyze the following content and suggest
-                        related topics and further reading.
-
-                        Requirements:
-                        - Use clear headings.
-                        - Use numbered or bullet lists.
-                        - Suggest useful related concepts.
-                        - Keep the suggestions relevant to the content.
-                        - Do not invent unrelated topics.
-
-                        Content:
-                        
-                        """);
-
-                break;
-
-            case "rewrite":
-
-                promptBuilder.append("""
-                        Rewrite the following content.
-
-                        Requirements:
-                        - Improve clarity and readability.
-                        - Keep the original meaning.
-                        - Use professional and natural language.
-                        - Do not add unnecessary information.
-                        - Preserve important technical terms.
-
-                        Content:
-                        
-                        """);
-
-                break;
-
-            case "grammar":
-
-                promptBuilder.append("""
-                        Correct the grammar of the following content.
-
-                        Requirements:
-                        - Correct grammar, spelling and punctuation.
-                        - Preserve the original meaning.
-                        - Improve sentence structure where necessary.
-                        - Do not unnecessarily rewrite the content.
-                        - Return the corrected version directly.
-
-                        Content:
-                        
-                        """);
-
-                break;
-
-            case "explain":
-
-                promptBuilder.append("""
-                        Explain the following content in simple and
-                        easy-to-understand language.
-
-                        Requirements:
-                        - Explain difficult concepts clearly.
-                        - Use examples where useful.
-                        - Use headings and bullet points where appropriate.
-                        - Assume the reader is learning the topic for the first time.
-                        - Do not unnecessarily repeat the original text.
-
-                        Content:
-                        
-                        """);
-
-                break;
-
-            case "improve":
-
-                promptBuilder.append("""
-                        Improve the following content.
-
-                        Requirements:
-                        - Improve clarity.
-                        - Improve grammar.
-                        - Improve readability.
-                        - Improve sentence structure.
-                        - Maintain the original meaning.
-                        - Make the content professional and polished.
-
-                        Content:
-                        
-                        """);
-
-                break;
-
-            case "simplify":
-
-                promptBuilder.append("""
-                        Simplify the following content.
-
-                        Requirements:
-                        - Use simple and easy-to-understand language.
-                        - Preserve the original meaning.
-                        - Remove unnecessary complexity.
-                        - Keep important technical terms when necessary.
-                        - Use short sentences where appropriate.
-
-                        Content:
-                        
-                        """);
-
-                break;
-
-            case "translate":
-
-                String language = requestDto.getLanguage();
-
-                if (language == null ||
-                        language.trim().isEmpty()) {
-
-                    throw new ApplicationRuntimeException(
-                            "Translation language is required."
-                    );
-                }
-
-                promptBuilder.append("""
-                        Translate the following content into
-                        the requested language.
-
-                        Requirements:
-                        - Preserve the original meaning.
-                        - Preserve technical terminology where appropriate.
-                        - Keep the same structure where possible.
-                        - Do not add explanations.
-                        - Return only the translated content.
-
-                        Target language:
-                        
-                        """);
-
-                promptBuilder.append(language);
-
-                promptBuilder.append("""
-
-                        Content:
-
-                        """);
-
-                break;
-
-            default:
+            if (language == null ||
+                    language.trim().isEmpty()) {
 
                 throw new ApplicationRuntimeException(
-                        "Unsupported operation: "
-                                + requestDto.getOperation()
+                        "Translation language is required."
                 );
+            }
+
+            promptBuilder.append(promptEnum.getValue());
+            promptBuilder.append(language);
+            promptBuilder.append("\n\nContent:\n\n");
+        } else {
+            promptBuilder.append(promptEnum.getValue());
         }
 
         promptBuilder.append(content);
